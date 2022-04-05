@@ -9,6 +9,9 @@ import teksystems.casestudy.database.dao.UserDAO;
 import teksystems.casestudy.database.entity.User;
 import teksystems.casestudy.formbean.RegisterFormBean;
 
+import java.awt.event.MouseEvent;
+import java.util.List;
+
 @Slf4j
 @Controller
 public class UserController {
@@ -82,7 +85,16 @@ public class UserController {
         return response;
     }
 
+    @GetMapping("/user/search")
+    public ModelAndView search() {
+        ModelAndView response = new ModelAndView();
+        response.setViewName("user/search");
 
+        List<User> users = userDao.findByFirstNameIgnoreCaseContaining("Eric");
+        response.addObject("users", users);
+
+        return response;
+    }
 
 
 }

@@ -17,5 +17,8 @@
 <div class="container">
 
     <a href="/index">Index</a> &nbsp |
-    <a href="/user/register">Sign Up</a>
+    <a href="/user/register">Sign Up</a> &nbsp |
+    <a href="/user/search">Search</a>
+
+
     <hr>

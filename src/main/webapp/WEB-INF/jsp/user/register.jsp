@@ -1,4 +1,14 @@
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
 <jsp:include page="../include/header.jsp" />
+
+<c:if test="${empty form.id}">
+    <h1>Sign Up</h1>
+</c:if>
+
+<c:if test="${not empty form.id}">
+    <h1>Edit User</h1>
+</c:if>
 
 <form action="/user/registerSubmit" method="post">
 
