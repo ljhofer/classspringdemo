@@ -6,6 +6,23 @@
 
 <h1>Search</h1>
 
+
+<form action="/user/search" method="get" >
+<%--    <input type="hidden" name="id" value="${form.id}">--%>
+    <input type="text" name="searchFirstName" id="searchFirstName" placeholder="Enter first name" value="${searchFirstName}">
+    <br>
+    <br>
+    <button id="searchId" type="submit">Search</button>
+
+</form>
+
+<br><br>
+
+<c:if test="${not empty searchFirstName}">
+    <h2>Search results found ${users.size()}</h2>
+</c:if>
+
+
 <table class="table">
     <tr scope="row">
         <th>Email</th>

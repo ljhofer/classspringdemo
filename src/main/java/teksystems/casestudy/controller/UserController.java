@@ -3,13 +3,18 @@ package teksystems.casestudy.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import teksystems.casestudy.database.dao.UserDAO;
 import teksystems.casestudy.database.entity.User;
 import teksystems.casestudy.formbean.RegisterFormBean;
 
+import javax.validation.Valid;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -33,9 +38,30 @@ public class UserController {
     }
 
     // This method now becomes a create and an edit based on if the user id is populated in the registerFormBean
-    @RequestMapping(value = "/user/registerSubmit", method = RequestMethod.POST)
-    public ModelAndView registerSubmit(RegisterFormBean form) throws Exception {
+    @RequestMapping(value = "/user/registerSubmit", method = {RequestMethod.GET, RequestMethod.POST})
+    public ModelAndView registerSubmit(@Valid RegisterFormBean form, BindingResult bindingResult) throws Exception {
         ModelAndView response = new ModelAndView();
+
+        log.info(form.toString());
+
+
+        if (bindingResult.hasErrors() ) {
+
+            List<String> errorMessages = new ArrayList<>();
+            for ( ObjectError error : bindingResult.getAllErrors()) {
+                errorMessages.add(error.getDefaultMessage());
+                log.info( ((FieldError) error).getField()  + " " + error.getDefaultMessage() );
+            }
+
+            response.addObject("form", form);
+
+            response.addObject("bindingResult", bindingResult);
+
+            // because there is one or more error we do not want to process the logic below
+            // that will creat a new user in the database we want to show the same model that we are already on
+            response.setViewName("/user/register");
+            return response;
+        }
 
         // first try to load the user from the database using the incoming id on the form
         User user = userDao.findById(form.getId());
@@ -57,7 +83,7 @@ public class UserController {
         log.info(form.toString());
 
         // Will send us to the edit page for this user which will be responsible for loading the user from the database and rendering the info
-        // When you use redirect: it tells spring to tredirect page, uses an actual URL rather than a view name path
+        // When you use redirect: it tells spring to redirect page, uses an actual URL rather than a view name path
         response.setViewName("redirect:/user/edit/" + user.getId());
 
         return response;
@@ -85,13 +111,24 @@ public class UserController {
         return response;
     }
 
-    @GetMapping("/user/search")
-    public ModelAndView search() {
+    @RequestMapping(value  = "/user/search", method = RequestMethod.POST )
+    public ModelAndView search( @RequestParam (required = false) String searchFirstName ) {
         ModelAndView response = new ModelAndView();
         response.setViewName("user/search");
 
-        List<User> users = userDao.findByFirstNameIgnoreCaseContaining("Eric");
+        // Create a new array list to hold the list of users
+        List<User> users = new ArrayList<>();
+
+        if ( searchFirstName != null && !searchFirstName.isBlank()) {
+            // Query the database for that name
+            users = userDao.findByFirstNameIgnoreCaseContaining(searchFirstName);
+        }
+
+        // Adds user list to model
         response.addObject("users", users);
+
+        // Adds the search value to the model
+        response.addObject("searchFirstName", searchFirstName);
 
         return response;
     }
