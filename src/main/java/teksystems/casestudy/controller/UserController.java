@@ -1,7 +1,12 @@
 package teksystems.casestudy.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -9,7 +14,9 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import teksystems.casestudy.database.dao.UserDAO;
+import teksystems.casestudy.database.dao.UserRoleDAO;
 import teksystems.casestudy.database.entity.User;
+import teksystems.casestudy.database.entity.UserRole;
 import teksystems.casestudy.formbean.RegisterFormBean;
 
 import javax.validation.Valid;
@@ -19,12 +26,21 @@ import java.util.List;
 
 @Slf4j
 @Controller
+@PreAuthorize("hasAnyAuthority('USER', 'ADMIN')")
 public class UserController {
 
     @Autowired
     private UserDAO userDao;
 
-//    This is the controller method for the entry point of the user registration pate. It does not do anything other than provide a route to the register.jsp page
+    @Autowired
+    private UserRoleDAO userRoleDao;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+
+
+    //    This is the controller method for the entry point of the user registration pate. It does not do anything other than provide a route to the register.jsp page
     @RequestMapping(value = "/user/register", method = RequestMethod.GET)
     public ModelAndView register() throws Exception {
         ModelAndView response = new ModelAndView();
@@ -76,9 +92,17 @@ public class UserController {
         user.setEmail(form.getEmail());
         user.setFirstName(form.getFirstName());
         user.setLastName(form.getLastName());
-        user.setPassword(form.getPassword());
+//        Enccrypt password
+        String password = passwordEncoder.encode(form.getPassword());
+        user.setPassword(password);
 
         userDao.save(user);
+
+        UserRole userRole = new UserRole();
+        userRole.setUserId(user.getId());
+        userRole.setUserRole("USER");
+
+        userRoleDao.save(userRole);
 
         log.info(form.toString());
 
@@ -111,7 +135,8 @@ public class UserController {
         return response;
     }
 
-    @RequestMapping(value  = "/user/search", method = RequestMethod.POST )
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @RequestMapping(value  = "/user/search", method = RequestMethod.GET )
     public ModelAndView search( @RequestParam (required = false) String searchFirstName ) {
         ModelAndView response = new ModelAndView();
         response.setViewName("user/search");
